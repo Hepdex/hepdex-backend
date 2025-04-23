@@ -1,0 +1,26 @@
+{
+  "name": "hepdex-backend",
+  "version": "1.0.0",
+  "description": "Platform for hiring professionals and for finding remote jobs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-dev": "nodemon index.js"
+  },
+  "keywords": [
+    "remote",
+    "jobs",
+    "hiring",
+    "recruit"
+  ],
+  "author": "Brivnet",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.15.0",
+    "multer": "^1.4.5-lts.2",
+    "nodemon": "^3.1.9"
+  }
+}
