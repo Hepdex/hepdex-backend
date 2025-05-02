@@ -76,7 +76,6 @@ jobController.updateActiveStatus = ("/update-job-active-status", async (req, res
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {job}, true)
         return
         
-      
     } 
     catch (err) {
         console.log(err)    
