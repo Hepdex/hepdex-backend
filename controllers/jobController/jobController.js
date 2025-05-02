@@ -37,6 +37,53 @@ jobController.addJobs = ("/add-job", async (req, res)=>{
         return
     }
 })
+
+
+jobController.getJobs = ("/get-jobs", async (req, res)=>{
+    try{
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+
+
+        //get jobs database
+        const jobs = await database.findMany({employer: userID}, database.collections.jobs).toArray()
+        
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {jobs}, true)
+        return
+        
+      
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
+jobController.updateActiveStatus = ("/update-job-active-status", async (req, res)=>{
+    try{
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+        const payload = JSON.parse(req.body)
+        const jobID = ObjectId.createFromHexString(payload.jobID)
+
+        //update the job status
+        if(typeof payload.active !== "boolean"){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "active should be a boolean"}, true)
+            return
+        }
+        await database.updateOne({_id: jobID, employer: userID}, database.collections.jobs, {active: payload.active})
+        const job = await database.findOne({_id: jobID, employer: userID}, database.collections.jobs)
+        
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {job}, true)
+        return
+        
+      
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
   
   
 module.exports = jobController

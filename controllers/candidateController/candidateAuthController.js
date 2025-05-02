@@ -53,7 +53,6 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
  
         //generate otp
         payload.otp = utilities.otpGenerator() 
-        console.log(payload)
  
         //save to database
         const savedCandidate = await database.insertOne(payload, database.collections.users)
