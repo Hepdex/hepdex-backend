@@ -10,7 +10,7 @@ employerAuthController.signup = ("/employer-signup", async (req, res)=>{
         const payload = JSON.parse(req.body)
 
         //Validate payload
-        const paylodStatus = await utilities.userSignupValidator(payload, ["firstName", "lastName", "email", "companySize", "country", "password"], "employer")
+        const paylodStatus = await utilities.userSignupValidator(payload, ["firstName", "lastName", "email", "companyName", "companySize", "country", "password"], "employer")
         if(!paylodStatus.isValid){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
             return
@@ -33,10 +33,10 @@ employerAuthController.signup = ("/employer-signup", async (req, res)=>{
         //add other properties
         payload.role = "employer"
         payload.createdAt = new Date()
-        payload.isEmailVerified = false //THIS SHOULD BE CHANGED TO FALSE ON PODUCTION
+        payload.isEmailVerified = false
 
         //generate otp
-        payload.otp = utilities.otpGenerator() 
+        payload.otp = "000000"//utilities.otpGenerator() 
 
         //save to database
         const savedEmployer = await database.insertOne(payload, database.collections.users)
@@ -56,6 +56,7 @@ employerAuthController.signup = ("/employer-signup", async (req, res)=>{
         return
     }
 })
+
 
 
 module.exports = employerAuthController

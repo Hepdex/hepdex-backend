@@ -136,6 +136,13 @@ jobController.apply = ("/job-application", async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job is deleted"}, true)
             return
         }
+
+        //check if user has a resume
+        const user = await database.findOne({_id: userID}, database.collections.users)
+        if(!user.resumePath){
+            utilities.setResponseData(res, 403, {'content-type': 'application/json'}, {msg: "user has no resume"}, true)
+            return
+        }
         //check if the user has already applied for the job
         const alreadyApplied = job.applicants.find(applicant => applicant.userID.toString() === userID.toString())
         if(alreadyApplied){

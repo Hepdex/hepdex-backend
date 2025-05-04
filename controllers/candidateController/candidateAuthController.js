@@ -10,9 +10,10 @@ const candidateAuthController = {}
 candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
     try{
         const payload = req.body
+        console.log(payload)
  
         //Validate payload
-        const paylodStatus = await utilities.userSignupValidator(payload, ["firstName", "lastName", "email", "jobType", "country", "password"], "candidate")
+        const paylodStatus = await utilities.userSignupValidator(payload, ["firstName", "lastName", "email", "jobType", "jobTitle", "country", "password"], "candidate")
         if(!paylodStatus.isValid){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
             return
@@ -23,6 +24,9 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
         //convert email and username to all lowercase
         payload.email = payload.email.toLowerCase()
         payload.country = payload.country.toLowerCase()
+        payload.jobType = payload.jobType.toLowerCase()
+        payload.jobTitle = payload.jobTitle.toLowerCase()
+
         //check if email
         const uniqueChecker = await database.checkForExistingUser(payload)
  
@@ -49,10 +53,10 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
         //add other properties
         payload.role = "candidate"
         payload.createdAt = new Date()
-        payload.isEmailVerified = false //THIS SHOULD BE CHANGED TO FALSE ON PODUCTION
+        payload.isEmailVerified = false
  
         //generate otp
-        payload.otp = utilities.otpGenerator() 
+        payload.otp = "000000" //utilities.otpGenerator() 
  
         //save to database
         const savedCandidate = await database.insertOne(payload, database.collections.users)

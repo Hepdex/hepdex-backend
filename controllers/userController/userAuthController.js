@@ -1,5 +1,6 @@
 const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
+const {ObjectId} = require("mongodb")
 
 const userAuthController = {}
 
@@ -18,7 +19,7 @@ userAuthController.login = ("/user/login", async (req, res)=>{
         //check if email is verified
         if(!user.isEmailVerified){
             //generate new OTP
-            const otp = utilities.otpGenerator()
+            const otp = "000000" //utilities.otpGenerator()
             //update user object
             await database.updateOne({_id: user._id}, database.collections.users, {otp})
             //send response
@@ -89,6 +90,41 @@ userAuthController.logout = ("/logout", async (req, res)=>{
           { msg: "Server error" },
           true
         );
+    }
+})
+
+
+userAuthController.verifyOTP = ("/verify-otp", async (req, res)=>{
+    try {
+        const payload = JSON.parse(req.body)
+        const userID = ObjectId.createFromHexString(payload.userID)
+
+        //get user
+        const user = await database.findOne({_id: userID}, database.collections.users)
+        if(!user){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "user not found"}, true)
+            return
+        }
+
+        //check if OTP match
+        if(payload.otp !== user.otp){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "invalid OTP"}, true)
+            return
+        }
+        //update user object
+        await database.updateOne({_id: user._id}, database.collections.users, {isEmailVerified: true, otp: null})
+
+        //send response
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "Email verified successfully"}, true)
+
+        return
+            
+        
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
     }
 })
 
