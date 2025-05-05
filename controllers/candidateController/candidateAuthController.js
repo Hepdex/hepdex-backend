@@ -26,6 +26,7 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
         payload.country = payload.country.toLowerCase()
         payload.jobType = payload.jobType.toLowerCase()
         payload.jobTitle = payload.jobTitle.toLowerCase()
+        payload.deleted = false
 
         //check if email
         const uniqueChecker = await database.checkForExistingUser(payload)
