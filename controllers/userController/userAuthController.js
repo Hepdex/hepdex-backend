@@ -40,6 +40,7 @@ userAuthController.login = ("/user/login", async (req, res)=>{
         const token = utilities.jwt("s", {userID: user._id, role: user.role})
         delete user.password
         delete user.otp
+        delete user.deleted
 
         // Set the token in an HTTP-only cookie
         res.cookie("token", token, {

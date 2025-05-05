@@ -16,8 +16,6 @@ candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
         const queryLower = Object.fromEntries(queryKeys.map((key, index) => [key, queryValuesLower[index]]))
         queryLower.role = "candidate"
         queryLower.deleted = false
-        console.log(queryLower)
-        
         
         //get candidates 
         const candidates = await database.findMany(queryLower, database.collections.users, ["password", "deleted", "otp", "resumePath"], 0).toArray()

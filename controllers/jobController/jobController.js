@@ -47,7 +47,7 @@ jobController.getJobs = ("/get-jobs", async (req, res)=>{
 
 
         //get jobs database
-        const jobs = await database.findMany({employer: userID, deleted: false}, database.collections.jobs).toArray()
+        const jobs = await database.findMany({employer: userID, deleted: false}, database.collections.jobs, ["deleted"], 0).toArray()
         
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {jobs}, true)
         return
@@ -183,6 +183,7 @@ jobController.updateJob = ("/update-job", async (req, res)=>{
         const payload = JSON.parse(req.body)
         const jobID = ObjectId.createFromHexString(payload.jobID)
 
+        delete payload.jobID
         //check if the job exists
         const job = await database.findOne({_id: jobID}, database.collections.jobs)
         if(!job){
@@ -201,6 +202,7 @@ jobController.updateJob = ("/update-job", async (req, res)=>{
         }
 
         //Validate payload
+        console.log(payload)
         const paylodStatus = await utilities.jobValidator(payload, ["jobTitle", "jobType", "department", "country", "aboutRole", "minSalary", "maxSalary", "currency", "workHours", "timeZone"])
         if(!paylodStatus.isValid){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
@@ -214,7 +216,7 @@ jobController.updateJob = ("/update-job", async (req, res)=>{
         //update the job
         await database.updateOne({_id: jobID, employer: userID}, database.collections.jobs, payload)
         //get the job again to send back to the user
-        const updatedJob = await database.findOne({_id: jobID}, database.collections.jobs)
+        const updatedJob = await database.findOne({_id: jobID}, database.collections.jobs, ["deleted"], 0)
         
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {updatedJob}, true)
         return

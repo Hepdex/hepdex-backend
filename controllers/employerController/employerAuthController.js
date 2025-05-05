@@ -19,6 +19,7 @@ employerAuthController.signup = ("/employer-signup", async (req, res)=>{
         //convert email and username to all lowercase
         payload.email = payload.email.toLowerCase()
         payload.country = payload.country.toLowerCase()
+        payload.deleted = false
         //check if email
         const uniqueChecker = await database.checkForExistingUser(payload)
 
