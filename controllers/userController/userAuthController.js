@@ -129,4 +129,22 @@ userAuthController.verifyOTP = ("/verify-otp", async (req, res)=>{
     }
 })
 
+userAuthController.authStatus = ("/auth-status", async (req, res)=>{
+    try {
+        //send response
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "User authentication is valid"}, true)
+
+        return
+    } catch (err) {
+        console.error(err);
+        utilities.setResponseData(
+          res,
+          500,
+          { 'content-type': 'application/json' },
+          { msg: "Server error" },
+          true
+        );
+    }
+})
+
 module.exports = userAuthController
