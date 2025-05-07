@@ -40,6 +40,81 @@ jobController.addJobs = ("/add-job", async (req, res)=>{
     }
 })
 
+jobController.searchJobs = ("/search-jobs", async(req, res)=>{
+    try{
+        //get the job title from query param
+        const jobTitle = req.query.jobTitle
+        const department = req.query.department
+
+        //get all active jobs by the specified job title
+        let jobs;
+        if(jobTitle){
+            jobs = await database.db.collection(database.collections.jobs).aggregate([
+                {
+                    $match: {
+                        jobTitle: { $regex: jobTitle || '', $options: 'i' },
+                        deleted: false,
+                        active: true
+                    }
+                },
+                {
+                    $addFields: {
+                        applicantCount: { $size: { $ifNull: ['$applicants', []] } }
+                    }
+                },
+                {
+                    $project: {
+                        applicants: 0, // exclude applicants field
+                        deleted: 0 // exclude deleted field
+                    }
+                },
+                {
+                    $sort: {
+                        createdAt: -1 // sort from newest to oldest
+                    }
+                }
+            ]).toArray()
+        }
+        else if(department){
+            jobs = await database.db.collection(database.collections.jobs).aggregate([
+                {
+                    $match: {
+                        jobTitle: { $regex: department || '', $options: 'i' },
+                        deleted: false,
+                        active: true
+                    }
+                },
+                {
+                    $addFields: {
+                        applicantCount: { $size: { $ifNull: ['$applicants', []] } }
+                    }
+                },
+                {
+                    $project: {
+                        applicants: 0, // exclude applicants field
+                        deleted: 0 // exclude deleted field
+                    }
+                },
+                {
+                    $sort: {
+                        createdAt: -1 // sort from newest to oldest
+                    }
+                }
+            ]).toArray()
+
+        }
+
+        //send response
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {jobs}, true)
+
+    }
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
 
 jobController.getJobs = ("/get-jobs", async (req, res)=>{
     try{
@@ -144,6 +219,8 @@ jobController.apply = ("/job-application", async (req, res)=>{
             utilities.setResponseData(res, 403, {'content-type': 'application/json'}, {msg: "user has no resume"}, true)
             return
         }
+        //add the reumePath to the payload
+        payload.resumePath = user.resumePath
         //check if the user has already applied for the job
         const alreadyApplied = job.applicants.find(applicant => applicant.userID.toString() === userID.toString())
         if(alreadyApplied){
