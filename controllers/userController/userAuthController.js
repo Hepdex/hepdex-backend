@@ -44,7 +44,7 @@ userAuthController.login = ("/user/login", async (req, res)=>{
 
         // Set the token in an HTTP-only cookie
         res.cookie("token", token, {
-            httpOnly: true,           
+            httpOnly: false,           
             secure: process.env.NODE_ENV === "production", 
             sameSite: "None",       // Helps protect against CSRF
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
