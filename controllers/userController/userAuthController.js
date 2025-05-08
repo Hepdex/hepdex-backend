@@ -44,15 +44,15 @@ userAuthController.login = ("/user/login", async (req, res)=>{
 
         // Set the token in an HTTP-only cookie
         res.cookie("token", token, {
-            httpOnly: false,           
+            httpOnly: true,           
             secure: process.env.NODE_ENV === "production", 
             sameSite: "None",       // Helps protect against CSRF
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
-            path: "/"
+            //path: "/"
         });
             
         //send response
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {user}, true)
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {user, token}, true)
         return
         
     } 
