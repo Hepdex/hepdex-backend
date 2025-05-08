@@ -46,7 +46,7 @@ userAuthController.login = ("/user/login", async (req, res)=>{
         res.cookie("token", token, {
             httpOnly: true,           
             secure: process.env.NODE_ENV === "production", 
-            sameSite: "Strict",       // Helps protect against CSRF
+            sameSite: "Lax",       // Helps protect against CSRF
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
             path: "/"
         });

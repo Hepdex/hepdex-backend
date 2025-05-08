@@ -5,7 +5,6 @@ const candidateController = {}
 
 candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
     try{
-        //const userID = ObjectId.createFromHexString(req.decodedToken.userID)
         const query = req.query
 
         //make sure the values of the query are in lower case
@@ -19,6 +18,34 @@ candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
         
         //get candidates 
         const candidates = await database.findMany(queryLower, database.collections.users, ["password", "deleted", "otp", "resumePath"], 0).toArray()
+        
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {candidates}, true)
+        return
+        
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
+
+candidateController.updateProfile = ("/update-profile", async (req, res)=>{
+    try{
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+        const payload = JSON.parse(req.body)
+        
+        //get user
+        const user = await database.findOne({_id: userID, deleted: false}, database.collections.users)
+
+        if(!user){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "user not found"}, true)
+            return
+        }
+
+        //validate payload
+        
         
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {candidates}, true)
         return
