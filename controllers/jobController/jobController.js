@@ -10,7 +10,7 @@ jobController.addJobs = ("/add-job", async (req, res)=>{
         const userID = ObjectId.createFromHexString(req.decodedToken.userID)
   
         //Validate payload
-        const paylodStatus = await utilities.jobValidator(payload, ["jobTitle", "jobType", "department", "country", "aboutRole", "minSalary", "maxSalary", "currency", "workHours", "timeZone"])
+        const paylodStatus = await utilities.jobValidator(payload, ["jobTitle", "jobType", "department", "country", "aboutRole", "minSalary", "maxSalary", "currency", "paymentInterval", "startTime", "endTime", "timeZone"])
         if(!paylodStatus.isValid){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
             return
