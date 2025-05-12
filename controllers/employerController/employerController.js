@@ -2,37 +2,9 @@ const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
 const {ObjectId} = require("mongodb")
 
-const candidateController = {}
+const employerController = {}
 
-candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
-    try{
-        const query = req.query
-
-        //make sure the values of the query are in lower case
-        const queryKeys = Object.keys(query)
-        const queryValues = Object.values(query)
-        //const queryKeysLower = queryKeys.map((key)=>key.toLowerCase())
-        const queryValuesLower = queryValues.map((value)=>value.toLowerCase())
-        const queryLower = Object.fromEntries(queryKeys.map((key, index) => [key, queryValuesLower[index]]))
-        queryLower.role = "candidate"
-        queryLower.deleted = false
-        
-        //get candidates 
-        const candidates = await database.findMany(queryLower, database.collections.users, ["password", "deleted", "otp", "resumePath"], 0).toArray()
-        
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {candidates}, true)
-        return
-        
-    } 
-    catch (err) {
-        console.log(err)    
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
-        return
-    }
-})
-
-
-candidateController.updateProfile = ("/update-candidate-profile", async (req, res)=>{
+employerController.updateProfile = ("/update-candidate-profile", async (req, res)=>{
     try{
         const userID = ObjectId.createFromHexString(req.decodedToken.userID)
         const payload = JSON.parse(req.body)
@@ -46,7 +18,7 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
         }
         
         //validate payload
-        const paylodStatus = utilities.profileUpdateValidator(payload, ["firstName", "lastName", "jobType", "jobTitle", "country"])
+        const paylodStatus = utilities.profileUpdateValidator(payload, ["firstName", "lastName", "companyName", "companySize", "country"])
         if(!paylodStatus.isValid){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
             return
@@ -57,6 +29,7 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
         }
 
         paylodStatus.updates.updatedAt = new Date()
+        
         //update user
         await database.updateOne({_id: userID}, database.collections.users, paylodStatus.updates)
 
@@ -75,4 +48,4 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
     }
 })
 
-module.exports = candidateController
+module.exports = employerController
