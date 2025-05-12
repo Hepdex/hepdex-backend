@@ -46,19 +46,19 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
         }
         
         //validate payload
-        const paylodStatus = utilities.profileUpdateValidator(payload, ["firstName", "lastName", "jobType", "jobTitle", "country"])
-        if(!paylodStatus.isValid){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
+        const payloadStatus = utilities.profileUpdateValidator(payload, ["firstName", "lastName", "jobType", "jobTitle", "country"])
+        if(!payloadStatus.isValid){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: payloadStatus.msg}, true)
             return
         }
 
-        if(paylodStatus.updates.country){
-            paylodStatus.updates.country = paylodStatus.updates.country.toLowerCase()
+        if(payloadStatus.updates.country){
+            payloadStatus.updates.country = payloadStatus.updates.country.toLowerCase()
         }
 
-        paylodStatus.updates.updatedAt = new Date()
+        payloadStatus.updates.updatedAt = new Date()
         //update user
-        await database.updateOne({_id: userID}, database.collections.users, paylodStatus.updates)
+        await database.updateOne({_id: userID}, database.collections.users, payloadStatus.updates)
 
         // get updated user
         const updatedUser = await database.findOne({_id: userID}, database.collections.users, ["password", "otp", "deleted"], 0 )
