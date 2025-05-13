@@ -48,4 +48,25 @@ employerController.updateProfile = ("/update-candidate-profile", async (req, res
     }
 })
 
+
+
+employerController.requirements = ("/update-candidate-profile", async (req, res)=>{
+    try{
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+        const payload = JSON.parse(req.body)
+        
+        payload.solved = false
+
+        
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "Success"}, true)
+        return
+        
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
 module.exports = employerController
