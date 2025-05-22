@@ -1,6 +1,7 @@
 const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
 const {ObjectId} = require("mongodb")
+const {sendEmail, otpEmailContent} = require("../../lib/email")
 
 const userController = {}
 
@@ -67,7 +68,7 @@ userController.updateEmail = ("/update-email", async (req, res)=>{
             return
         }
         //generate otp
-        const otp = "000000"//utilities.generateOTP()
+        const otp = utilities.otpGenerator()
 
         //delete any existing update request
         await database.deleteMany({userID: userID}, database.collections.updates)
@@ -86,6 +87,15 @@ userController.updateEmail = ("/update-email", async (req, res)=>{
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "success"}, true)
         
         //send OTP to email
+        const emailContent = otpEmailContent(otp)
+        const emailData = {
+            to: payload.email,
+            subject: "Hepdex OTP Verification",
+            text: `Your OTP is: ${otp}`,
+            html: emailContent
+        }
+
+        sendEmail(emailData)
 
         return
         
@@ -130,7 +140,7 @@ userController.updatePassword = ("/update-password", async (req, res)=>{
         //hash new password
         payload.newPassword = utilities.dataHasher(payload.newPassword)
         //generate otp
-        const otp = "000000"//utilities.generateOTP()
+        const otp = utilities.otpGenerator()
 
         //delete any existing update request
         await database.deleteMany({userID: userID}, database.collections.updates)
@@ -149,6 +159,15 @@ userController.updatePassword = ("/update-password", async (req, res)=>{
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "success"}, true)
         
         //send OTP to email
+        const emailContent = otpEmailContent(otp)
+        const emailData = {
+            to: user.email,
+            subject: "Hepdex OTP Verification",
+            text: `Your OTP is: ${otp}`,
+            html: emailContent
+        }
+
+        sendEmail(emailData)
 
         return
         
@@ -180,7 +199,7 @@ userController.forgotPassword = ("/forgot-password", async (req, res)=>{
         }
         
         //generate otp
-        const otp = "000000"//utilities.generateOTP()
+        const otp = utilities.otpGenerator()
 
         //delete any existing update request
         await database.deleteMany({userID: user._id}, database.collections.updates)
@@ -202,6 +221,16 @@ userController.forgotPassword = ("/forgot-password", async (req, res)=>{
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {userID: user._id}, true)
         
         //send OTP to email
+
+        const emailContent = otpEmailContent(otp)
+        const emailData = {
+            to: user.email,
+            subject: "Hepdex OTP Verification",
+            text: `Your OTP is: ${otp}`,
+            html: emailContent
+        }
+
+        sendEmail(emailData)
 
         return
         

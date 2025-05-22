@@ -3,6 +3,7 @@ const utilities = require("../../lib/utilities")
 const { uploadFileToS3 } = require("../../lib/s3Uploader")
 const path = require("path");
 const {ObjectId} = require("mongodb")
+const {sendEmail, otpEmailContent} = require("../../lib/email")
  
 const candidateAuthController = {}
  
@@ -57,7 +58,7 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
         payload.isEmailVerified = false
  
         //generate otp
-        payload.otp = "000000" //utilities.otpGenerator() 
+        payload.otp = utilities.otpGenerator() 
  
         //save to database
         const savedCandidate = await database.insertOne(payload, database.collections.users)
@@ -66,6 +67,16 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {userID: savedCandidate.insertedId}, true)
  
         //SEND EMAIL HERE
+        const emailContent = otpEmailContent(otp)
+            const emailData = {
+                to: payload.email,
+                subject: "Hepdex OTP Verification",
+                text: `Your OTP is: ${otp}`,
+                html: emailContent
+            }
+
+            sendEmail(emailData)
+
  
         return
              

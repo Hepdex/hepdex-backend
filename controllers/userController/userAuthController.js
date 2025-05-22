@@ -1,6 +1,7 @@
 const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
 const {ObjectId} = require("mongodb")
+const {sendEmail, otpEmailContent} = require("../../lib/email")
 
 const userAuthController = {}
 
@@ -19,12 +20,21 @@ userAuthController.login = ("/user/login", async (req, res)=>{
         //check if email is verified
         if(!user.isEmailVerified){
             //generate new OTP
-            const otp = "000000" //utilities.otpGenerator()
+            const otp = utilities.otpGenerator()
             //update user object
             await database.updateOne({_id: user._id}, database.collections.users, {otp})
             //send response
             utilities.setResponseData(res, 401, {'content-type': 'application/json'}, {msg: "Unverified email", userId: user._id}, true)
             //SEND OTP TO EMAIL
+            const emailContent = otpEmailContent(otp)
+            const emailData = {
+                to: user.email,
+                subject: "Hepdex OTP Verification",
+                text: `Your OTP is: ${otp}`,
+                html: emailContent
+            }
+
+            sendEmail(emailData)
             
             return
         }
