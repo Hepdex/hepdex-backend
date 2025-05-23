@@ -47,11 +47,11 @@ employerAuthController.signup = ("/employer-signup", async (req, res)=>{
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {userID: savedEmployer.insertedId}, true)
 
         //SEND EMAIL HERE
-        const emailContent = otpEmailContent(otp)
+        const emailContent = otpEmailContent(payload.otp)
             const emailData = {
                 to: payload.email,
                 subject: "Hepdex OTP Verification",
-                text: `Your OTP is: ${otp}`,
+                text: `Your OTP is: ${payload.otp}`,
                 html: emailContent
             }
 
