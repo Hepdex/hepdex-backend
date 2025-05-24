@@ -18,7 +18,7 @@ candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
         queryLower.deleted = false
         
         //get candidates 
-        const candidates = await database.findMany(queryLower, database.collections.users, ["password", "deleted", "otp", "resumePath"], 0).toArray()
+        const candidates = await database.findMany(queryLower, database.collections.users, ["password", "deleted", "otp"], 0).toArray()
         
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {candidates}, true)
         return
