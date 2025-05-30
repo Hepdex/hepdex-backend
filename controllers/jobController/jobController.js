@@ -103,6 +103,32 @@ jobController.searchJobs = ("/search-jobs", async(req, res)=>{
             ]).toArray()
 
         }
+        else{
+            jobs = await database.db.collection(database.collections.jobs).aggregate([
+                {
+                    $match: {
+                        deleted: false,
+                        active: true
+                    }
+                },
+                {
+                    $addFields: {
+                        applicantCount: { $size: { $ifNull: ['$applicants', []] } }
+                    }
+                },
+                {
+                    $project: {
+                        applicants: 0, // exclude applicants field
+                        deleted: 0 // exclude deleted field
+                    }
+                },
+                {
+                    $sort: {
+                        createdAt: -1 // sort from newest to oldest
+                    }
+                }
+            ]).toArray()
+        }
 
         //send response
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {jobs}, true)
