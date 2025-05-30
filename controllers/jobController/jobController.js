@@ -43,95 +43,77 @@ jobController.addJobs = ("/add-job", async (req, res)=>{
 jobController.searchJobs = ("/search-jobs", async(req, res)=>{
     try{
         //get the job title from query param
-        const jobTitle = req.query.jobTitle
-        const department = req.query.department
+        const payload = req.query
+        payload.deleted = false
+        payload.active = true
+        const page = payload.page || 1
+        delete payload.page // remove page from payload to avoid it being used in the query
+        const limit = 10
+        const skip = (parseInt(page) - 1) * limit;
+
+        if(payload.jobTitle){
+            payload.jobTitle = { $regex: payload.jobTitle || '', $options: 'i' } 
+        }
+
+        if(payload.department){
+            payload.department = { $regex: payload.department || '', $options: 'i' } 
+        }
+        if(payload.country){
+            payload.country = { $regex: payload.country || '', $options: 'i' } 
+        }
+
 
         //get all active jobs by the specified job title
         let jobs;
-        if(jobTitle){
-            jobs = await database.db.collection(database.collections.jobs).aggregate([
-                {
-                    $match: {
-                        jobTitle: { $regex: jobTitle || '', $options: 'i' },
-                        deleted: false,
-                        active: true
-                    }
-                },
-                {
-                    $addFields: {
-                        applicantCount: { $size: { $ifNull: ['$applicants', []] } }
-                    }
-                },
-                {
-                    $project: {
-                        applicants: 0, // exclude applicants field
-                        deleted: 0 // exclude deleted field
-                    }
-                },
-                {
-                    $sort: {
-                        createdAt: -1 // sort from newest to oldest
-                    }
-                }
-            ]).toArray()
-        }
-        else if(department){
-            jobs = await database.db.collection(database.collections.jobs).aggregate([
-                {
-                    $match: {
-                        jobTitle: { $regex: department || '', $options: 'i' },
-                        deleted: false,
-                        active: true
-                    }
-                },
-                {
-                    $addFields: {
-                        applicantCount: { $size: { $ifNull: ['$applicants', []] } }
-                    }
-                },
-                {
-                    $project: {
-                        applicants: 0, // exclude applicants field
-                        deleted: 0 // exclude deleted field
-                    }
-                },
-                {
-                    $sort: {
-                        createdAt: -1 // sort from newest to oldest
-                    }
-                }
-            ]).toArray()
 
-        }
-        else{
-            jobs = await database.db.collection(database.collections.jobs).aggregate([
-                {
-                    $match: {
-                        deleted: false,
-                        active: true
-                    }
-                },
-                {
-                    $addFields: {
-                        applicantCount: { $size: { $ifNull: ['$applicants', []] } }
-                    }
-                },
-                {
-                    $project: {
-                        applicants: 0, // exclude applicants field
-                        deleted: 0 // exclude deleted field
-                    }
-                },
-                {
-                    $sort: {
-                        createdAt: -1 // sort from newest to oldest
-                    }
+        // Use same filters for count
+        const totalCount = await database.db.collection(database.collections.jobs).countDocuments(payload);
+        
+        jobs = await database.db.collection(database.collections.jobs).aggregate([
+            {
+                $match: payload
+            },
+            {
+                $lookup: {
+                    from: database.collections.users, // users collection name
+                    localField: 'employer',
+                    foreignField: '_id',
+                    as: 'employerDetails'
                 }
-            ]).toArray()
-        }
+            },
+            {
+                $addFields: {
+                    employer: {
+                        $cond: [
+                            { $gt: [ { $size: '$employerDetails' }, 0 ] },
+                            {
+                                _id: { $arrayElemAt: ['$employerDetails._id', 0] },
+                                companyName: { $arrayElemAt: ['$employerDetails.companyName', 0] }
+                            },
+                            null
+                        ]
+                    },
+                    applicantCount: { $size: { $ifNull: ['$applicants', []] } }
+                }
+            },
+            { $project: { employerDetails: 0, applicants: 0, deleted: 0 } },
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit }
+        ]).toArray()
 
+        // Compute pagination info
+        const totalPages = Math.ceil(totalCount / limit);
+        const isLastPage = page >= totalPages;
+        const pagination = {
+            totalCount,
+            totalPages,
+            currentPage: page,
+            isLastPage
+        }
+        
         //send response
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {jobs}, true)
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {jobs, pagination}, true)
 
     }
     catch (err) {
