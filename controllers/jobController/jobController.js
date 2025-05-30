@@ -386,11 +386,3 @@ jobController.deleteJob = ("/delete-job", async (req, res)=>{
   
   
 module.exports = jobController
-
-
-
-
-/*[
-    {name: 'HR & Recruitment'}, {name: 'Finance & Accounts'}, {name: 'Virtual Support & Assistant'}, {name: 'Media & Marketing'}, {name: 'Graphics & Web Design'},
-    {name: 'Product & Engineering'}, {name: 'IT & Security'}, {name: 'Legal Processes'}, {name: 'Operations'}, {name: 'General Business'}
-]*/
