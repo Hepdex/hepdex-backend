@@ -159,11 +159,6 @@ jobController.getJob = ("/get-jobs", async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job is deleted"}, true)
             return
         }
-        // check if employer is the owner of the job
-        if(job.employer.toString() !== userID.toString()){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "User does not own this job"}, true)
-            return
-        }
         
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {job}, true)
         return
