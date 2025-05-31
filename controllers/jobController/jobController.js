@@ -144,7 +144,7 @@ jobController.getJobs = ("/get-jobs", async (req, res)=>{
     }
 })
 
-jobController.getJob = ("/get-jobs", async (req, res)=>{
+jobController.getJob = ("/get-job", async (req, res)=>{
     try{
         const userID = ObjectId.createFromHexString(req.decodedToken.userID)
         const jobID = ObjectId.createFromHexString(req.query.jobID)
@@ -159,10 +159,40 @@ jobController.getJob = ("/get-jobs", async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job is deleted"}, true)
             return
         }
+        // check if employer is the owner of the job
+        if(job.employer.toString() !== userID.toString()){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "User does not own this job"}, true)
+            return
+        }
         
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {job}, true)
+        return    
+      
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
         return
+    }
+})
+
+jobController.getJobCandidate = ("/get-job-candidate", async (req, res)=>{
+    try{
+        const jobID = ObjectId.createFromHexString(req.query.jobID)
+        //check if the job exists
+        const job = await database.findOne({_id: jobID}, database.collections.jobs, ["deleted", 'applicants'], 0)
+        if(!job){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job not found"}, true)
+            return  
+        }
+        //check if the job is deleted
+        if(job.deleted === true){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job is deleted"}, true)
+            return
+        }
         
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {job}, true)
+        return    
       
     } 
     catch (err) {
