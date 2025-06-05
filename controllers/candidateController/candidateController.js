@@ -75,4 +75,38 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
     }
 })
 
+
+
+candidateController.updateBio = ("/update-candidate-Bio", async (req, res)=>{
+    try{
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+        const payload = JSON.parse(req.body)
+        
+        //get user
+        const user = await database.findOne({_id: userID, deleted: false}, database.collections.users)
+
+        if(!user){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "user not found"}, true)
+            return
+        }
+        
+        
+        //update user
+        await database.updateOne({_id: userID}, database.collections.users, {bio: payload})
+
+        // get updated user
+        const updatedUser = await database.findOne({_id: userID}, database.collections.users, ["password", "otp", "deleted"], 0 )
+
+        
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {updatedUser}, true)
+        return
+        
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
 module.exports = candidateController
