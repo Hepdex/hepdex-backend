@@ -66,6 +66,11 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "user not found"}, true)
             return
         }
+
+        const bio = payload.bio
+        if(bio){
+            delete payload.bio
+        }
         
         //validate payload
         const payloadStatus = utilities.profileUpdateValidator(payload, ["firstName", "lastName", "jobType", "jobTitle", "country"])
@@ -78,6 +83,9 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
             payloadStatus.updates.country = payloadStatus.updates.country.toLowerCase()
         }
 
+        if(bio){
+            payloadStatus.updates.bio = bio
+        }
         payloadStatus.updates.updatedAt = new Date()
         //update user
         await database.updateOne({_id: userID}, database.collections.users, payloadStatus.updates)
