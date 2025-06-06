@@ -31,6 +31,28 @@ candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
     }
 })
 
+candidateController.getCandidate = ("/get-candidate", async (req, res)=>{
+    try{
+        const userID = ObjectId.createFromHexString(req.query.userID)
+        
+        //get candidate 
+        const candidate = await database.findOne({_id: userID, deleted: false}, database.collections.users, ["password", "otp", "deleted"], 0)
+
+        if(!candidate){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "candidate not found"}, true)
+        }
+        
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {candidate}, true)
+        return
+        
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
 
 candidateController.updateProfile = ("/update-candidate-profile", async (req, res)=>{
     try{

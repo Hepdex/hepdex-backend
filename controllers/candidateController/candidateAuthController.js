@@ -11,7 +11,6 @@ const candidateAuthController = {}
 candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
     try{
         const payload = req.body
-        console.log(payload)
  
         //Validate payload
         const paylodStatus = await utilities.userSignupValidator(payload, ["firstName", "lastName", "email", "jobType", "jobTitle", "country", "password"], "candidate")
