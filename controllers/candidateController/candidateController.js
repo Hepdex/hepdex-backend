@@ -109,8 +109,9 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
 
 candidateController.updateBio = ("/update-candidate-Bio", async (req, res)=>{
     try{
-        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+        
         const payload = JSON.parse(req.body)
+        const userID = ObjectId.createFromHexString(req.query.userID)
         
         //get user
         const user = await database.findOne({_id: userID, deleted: false}, database.collections.users)
