@@ -13,7 +13,7 @@ userAuthController.login = ("/user/login", async (req, res)=>{
         const user = await database.findOne({email: payload.email}, database.collections.users)
 
         if(!user){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "invalid email or password"}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "Invalid email or password"}, true)
             return
         }
 
