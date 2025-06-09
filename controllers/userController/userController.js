@@ -365,4 +365,34 @@ userController.verifyforgotPasswordOTP = ("/verify-forgot-password-otp", async (
     }
 })
 
+
+userController.checkUniqueEmail = ("/check-unique-email", async (req, res)=>{
+    try {
+        const payload = JSON.parse(req.body)
+
+        //check if email exists
+        const emailExists = await database.findOne({email: payload.email}, database.collections.users)
+        
+        
+        if(emailExists){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "This email already exists"}, true)
+            return
+        }
+
+        //send response
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "Email does not exist"}, true)
+
+        return
+            
+        
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
+
+
 module.exports = userController
