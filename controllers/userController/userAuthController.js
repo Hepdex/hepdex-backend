@@ -117,20 +117,77 @@ userAuthController.verifyOTP = ("/verify-otp", async (req, res)=>{
             return
         }
 
+       //get user update
+        const userUpdate = await database.findOne({userID: userID}, database.collections.updates)
+        if(!userUpdate ){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "No updates found"}, true)
+            return
+        }
+
         //check if OTP match
-        if(payload.otp !== user.otp){
+        if(payload.otp !== userUpdate.otp){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "invalid OTP"}, true)
             return
         }
-        //update user object
-        await database.updateOne({_id: user._id}, database.collections.users, {isEmailVerified: true, otp: null})
+
+        //update user data
+        const key = userUpdate.type
+        await database.updateOne({_id: userID}, database.collections.users, {[key]: userUpdate.value})
+
+        //delete user update
+        await database.deleteOne({userID: userID}, database.collections.updates)
+
 
         //send response
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "Email verified successfully"}, true)
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "OTP verified successfully"}, true)
 
         return
             
         
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
+userAuthController.resendOTP = ("/resend-otp", async (req, res)=>{
+    try {
+        const payload = JSON.parse(req.body)
+        const userID = ObjectId.createFromHexString(payload.userID)
+
+        //get user update
+        const userUpdate = await database.findOne({userID: userID}, database.collections.updates)
+                
+        if(!userUpdate){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "update request not found"}, true)
+            return
+        }
+
+        const user = await database.findOne({_id: userID}, database.collections.users)
+        
+        //generate new OTP
+        const newOTP = utilities.otpGenerator() 
+        //update updates object
+        await database.updateOne({userID: userID}, database.collections.updates, {otp: newOTP})
+        
+        //send response
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "OTP set successfully"}, true)
+        
+        //SEND EMAIL HERE
+        const emailContent = otpEmailContent(newOTP)
+        const emailData = {
+            to: user.email,
+            subject: "Hepdex OTP Verification",
+            text: `Your OTP is: ${newOTP}`,
+            html: emailContent
+        }
+        
+        sendEmail(emailData)
+        
+        return
+            
     } 
     catch (err) {
         console.log(err)    

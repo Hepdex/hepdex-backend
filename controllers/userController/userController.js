@@ -282,6 +282,49 @@ userController.verifyUpdateOTP = ("/verify-update-otp", async (req, res)=>{
     }
 })
 
+userController.resendUpdateOTP = ("/resend-update-otp", async (req, res)=>{
+    try {
+
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+
+        //get user update
+        const userUpdate = await database.findOne({userID: userID}, database.collections.updates)
+        
+        if(!userUpdate){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "update request not found"}, true)
+            return
+        }
+        const user = await database.findOne({_id: userID}, database.collections.users)
+
+        //generate new OTP
+        const newOTP = utilities.otpGenerator() 
+        //update updates object
+        await database.updateOne({userID: userID}, database.collections.updates, {otp: newOTP})
+
+        //send response
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "OTP set successfully"}, true)
+
+        //SEND EMAIL HERE
+        const emailContent = otpEmailContent(newOTP)
+            const emailData = {
+                to: user.email,
+                subject: "Hepdex OTP Verification",
+                text: `Your OTP is: ${newOTP}`,
+                html: emailContent
+            }
+
+            sendEmail(emailData)
+
+        return
+            
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
 
 userController.verifyforgotPasswordOTP = ("/verify-forgot-password-otp", async (req, res)=>{
     try {

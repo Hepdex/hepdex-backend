@@ -56,21 +56,32 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
         payload.createdAt = new Date()
         payload.isEmailVerified = false
  
-        //generate otp
-        payload.otp = utilities.otpGenerator() 
- 
         //save to database
         const savedCandidate = await database.insertOne(payload, database.collections.users)
+
+        //generate otp
+        const otp = utilities.otpGenerator()
+
+        //add data to updates collection
+        const updateData = {
+            userID: savedCandidate.insertedId,
+            type: "isEmailVerified",
+            value: true,
+            otp: otp,
+            createdAt: new Date()
+        }
+
+        await database.insertOne(updateData, database.collections.updates)
  
         //send response
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {userID: savedCandidate.insertedId}, true)
  
         //SEND EMAIL HERE
-        const emailContent = otpEmailContent(payload.otp)
+        const emailContent = otpEmailContent(otp)
             const emailData = {
                 to: payload.email,
                 subject: "Hepdex OTP Verification",
-                text: `Your OTP is: ${payload.otp}`,
+                text: `Your OTP is: ${otp}`,
                 html: emailContent
             }
 
