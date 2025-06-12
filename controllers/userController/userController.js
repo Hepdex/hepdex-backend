@@ -1,6 +1,6 @@
 const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
-const {getSignedS3Url, uploadFileToS3} = require("../../lib/s3Uploader.js")
+const {uploadFileToS3} = require("../../lib/s3Uploader.js")
 const sharp = require("sharp");
 const path = require("path"); // Ensure this is imported at the top
 const {ObjectId} = require("mongodb")

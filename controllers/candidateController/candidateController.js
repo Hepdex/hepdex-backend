@@ -106,8 +106,6 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
     }
 })
 
-
-
 candidateController.updateBio = ("/update-candidate-Bio", async (req, res)=>{
     try{
         
