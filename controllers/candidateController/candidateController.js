@@ -16,6 +16,7 @@ candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
         const queryLower = Object.fromEntries(queryKeys.map((key, index) => [key, queryValuesLower[index]]))
         queryLower.role = "candidate"
         queryLower.deleted = false
+        queryLower.available = true
         
         //get candidates 
         const candidates = await database.findMany(queryLower, database.collections.users, ["password", "deleted", "otp"], 0).toArray()
@@ -73,7 +74,7 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
         }
         
         //validate payload
-        const payloadStatus = utilities.profileUpdateValidator(payload, ["firstName", "lastName", "jobType", "jobTitle", "country"])
+        const payloadStatus = utilities.profileUpdateValidator(payload, ["firstName", "lastName", "jobType", "jobTitle", "country", "available"])
         if(!payloadStatus.isValid){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: payloadStatus.msg}, true)
             return
