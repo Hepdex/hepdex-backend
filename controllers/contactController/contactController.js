@@ -26,7 +26,8 @@ contactController.postContactMessage = ("/post-contact-message", async (req, res
             message: message.trim(),
             createdAt: new Date()
         }, database.collections.contactMessages);
-        // For this example, we will just return a success message
+        
+        //just return a success message
 
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "Contact message received successfully"}, true);
 
