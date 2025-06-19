@@ -88,7 +88,8 @@ jobController.searchJobs = ("/search-jobs", async(req, res)=>{
                             { $gt: [ { $size: '$employerDetails' }, 0 ] },
                             {
                                 _id: { $arrayElemAt: ['$employerDetails._id', 0] },
-                                companyName: { $arrayElemAt: ['$employerDetails.companyName', 0] }
+                                companyName: { $arrayElemAt: ['$employerDetails.companyName', 0] },
+                                companyLogo: { $arrayElemAt: ['$employerDetails.companyLogo', 0] }
                             },
                             null
                         ]
@@ -180,16 +181,43 @@ jobController.getJobCandidate = ("/get-job-candidate", async (req, res)=>{
     try{
         const jobID = ObjectId.createFromHexString(req.query.jobID)
         //check if the job exists
-        const job = await database.findOne({_id: jobID}, database.collections.jobs, ["deleted", 'applicants'], 0)
-        if(!job){
+        let job = await database.db.collection(database.collections.jobs).aggregate([
+            {
+                $match: {_id: jobID, deleted: false, active: true}
+            },
+            {
+                $lookup: {
+                    from: database.collections.users, // users collection name
+                    localField: 'employer',
+                    foreignField: '_id',
+                    as: 'employerDetails'
+                }
+            },
+            {
+                $addFields: {
+                    employer: {
+                        $cond: [
+                            { $gt: [ { $size: '$employerDetails' }, 0 ] },
+                            {
+                                _id: { $arrayElemAt: ['$employerDetails._id', 0] },
+                                companyName: { $arrayElemAt: ['$employerDetails.companyName', 0] },
+                                companyLogo: { $arrayElemAt: ['$employerDetails.companyLogo', 0] }
+                            },
+                            null
+                        ]
+                    },
+                    applicantCount: { $size: { $ifNull: ['$applicants', []] } }
+                }
+            },
+            { $project: { employerDetails: 0, applicants: 0, deleted: 0 } }
+        ]).toArray()
+        
+        if(job.length === 0){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job not found"}, true)
             return  
         }
-        //check if the job is deleted
-        if(job.deleted === true){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job is deleted"}, true)
-            return
-        }
+        
+        job = job[0] // since aggregate returns an array
         
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {job}, true)
         return    
