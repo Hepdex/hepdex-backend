@@ -86,7 +86,31 @@ savedJobController.getSavedJobs = ("/get-saved-jobs", async (req, res)=>{
             },
             {
                 $match: {
-                    "jobDetails.deleted": false
+                    "jobDetails.deleted": false,
+                    "jobDetails.active": true
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "jobDetails.employer",
+                    foreignField: "_id",
+                    as: "employerDetails"
+                }
+            },
+            {
+                $addFields: {
+                    "jobDetails.employer": {
+                        $cond: [
+                            { $gt: [ { $size: "$employerDetails" }, 0 ] },
+                            {
+                                _id: { $arrayElemAt: ["$employerDetails._id", 0] },
+                                companyName: { $arrayElemAt: ["$employerDetails.companyName", 0] },
+                                companyLogo: { $arrayElemAt: ["$employerDetails.companyLogo", 0] }
+                            },
+                            null
+                        ]
+                    }
                 }
             },
             {
@@ -103,15 +127,16 @@ savedJobController.getSavedJobs = ("/get-saved-jobs", async (req, res)=>{
                                 $mergeObjects: [
                                     "$$jobDetails",
                                     {
-                                        applicants: "$$REMOVE"
+                                        applicants: { $size: { $ifNull: ["$$jobDetails.applicants", []] } }
                                     }
                                 ]
                             }
                         }
                     }
                 }
-            }
-        ]).toArray()
+            }   
+        ]).toArray();
+
         
         if(savedJobs.length === 0){
             utilities.setResponseData(res, 404, {'content-type': 'application/json'}, {msg: "no saved jobs found"}, true)
@@ -157,7 +182,31 @@ savedJobController.getSavedJob = ("/get-saved-job", async (req, res)=>{
             },
             {
                 $match: {
-                    "jobDetails.deleted": false
+                    "jobDetails.deleted": false,
+                    "jobDetails.active": true
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "jobDetails.employer",
+                    foreignField: "_id",
+                    as: "employerDetails"
+                }
+            },
+            {
+                $addFields: {
+                    "jobDetails.employer": {
+                        $cond: [
+                            { $gt: [ { $size: "$employerDetails" }, 0 ] },
+                            {
+                                _id: { $arrayElemAt: ["$employerDetails._id", 0] },
+                                companyName: { $arrayElemAt: ["$employerDetails.companyName", 0] },
+                                companyLogo: { $arrayElemAt: ["$employerDetails.companyLogo", 0] }
+                            },
+                            null
+                        ]
+                    }
                 }
             },
             {
@@ -174,15 +223,15 @@ savedJobController.getSavedJob = ("/get-saved-job", async (req, res)=>{
                                 $mergeObjects: [
                                     "$$jobDetails",
                                     {
-                                        applicants: "$$REMOVE"
+                                        applicants: { $size: { $ifNull: ["$$jobDetails.applicants", []] } }
                                     }
                                 ]
                             }
                         }
                     }
                 }
-            }
-        ]).toArray() 
+            }   
+        ]).toArray(); 
         
         if(savedJob.length === 0){
             utilities.setResponseData(res, 404, {'content-type': 'application/json'}, {msg: "saved job not found"}, true)
@@ -229,8 +278,6 @@ savedJobController.deleteSavedJob = ("/delete-saved-job", async (req, res)=>{
         return
     }
 })
-
-
 
 
 module.exports = savedJobController
