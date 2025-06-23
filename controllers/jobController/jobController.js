@@ -120,17 +120,31 @@ jobController.searchJobs = ("/search-jobs", async(req, res)=>{
                 }
             },
             {
-                $addFields: { // NEW: Add isSaved field
-                    isSaved: {
-                        $cond: [
-                            { $gt: [{ $size: '$savedInfo' }, 0] },
-                            true,
-                            false
-                        ]
-                    }
+                $lookup: { //  NEW: Lookup for hasApplied
+                    from: database.collections.jobApplications,
+                    let: { jobId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$jobID', '$$jobId'] },
+                                        ...(userID ? [{ $eq: ['$userID', userID] }] : [{ $eq: [false, true] }])
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'appliedInfo'
                 }
             },
-            { $project: { employerDetails: 0, applicants: 0, deleted: 0, savedInfo: 0 } },
+            {
+                $addFields: { // NEW: Add isSaved field
+                    isSaved: { $gt: [{ $size: '$savedInfo' }, 0] },
+                    hasApplied: { $gt: [{ $size: '$appliedInfo' }, 0] }
+                }
+            },
+            { $project: { employerDetails: 0, applicants: 0, deleted: 0, savedInfo: 0, appliedInfo: 0 } },
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }
@@ -264,17 +278,31 @@ jobController.getJobCandidate = ("/get-job-candidate", async (req, res)=>{
                 }
             },
             {
-                $addFields: { // NEW: add isSaved field
-                    isSaved: {
-                        $cond: [
-                            { $gt: [{ $size: '$savedInfo' }, 0] },
-                            true,
-                            false
-                        ]
-                    }
+                $lookup: { // NEW: Lookup for hasApplied
+                    from: database.collections.jobApplications,
+                    let: { jobId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$jobID', '$$jobId'] },
+                                        ...(userID ? [{ $eq: ['$userID', userID] }] : [{ $eq: [false, true] }])
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'appliedInfo'
                 }
             },
-            { $project: { employerDetails: 0, applicants: 0, deleted: 0, savedInfo: 0 } }
+            {
+                $addFields: { // NEW: add isSaved field
+                    isSaved: { $gt: [{ $size: '$savedInfo' }, 0] },
+                    hasApplied: { $gt: [{ $size: '$appliedInfo' }, 0] }
+                }
+            },
+            { $project: { employerDetails: 0, applicants: 0, deleted: 0, savedInfo: 0, appliedInfo: 0 } }
         ]).toArray()
         
         if(job.length === 0){
@@ -504,35 +532,3 @@ jobController.deleteJob = ("/delete-job", async (req, res)=>{
   
   
 module.exports = jobController
-
-
-// let job = await database.db.collection(database.collections.jobs).aggregate([
-//             {
-//                 $match: {_id: jobID, deleted: false, active: true}
-//             },
-//             {
-//                 $lookup: {
-//                     from: database.collections.users, // users collection name
-//                     localField: 'employer',
-//                     foreignField: '_id',
-//                     as: 'employerDetails'
-//                 }
-//             },
-//             {
-//                 $addFields: {
-//                     employer: {
-//                         $cond: [
-//                             { $gt: [ { $size: '$employerDetails' }, 0 ] },
-//                             {
-//                                 _id: { $arrayElemAt: ['$employerDetails._id', 0] },
-//                                 companyName: { $arrayElemAt: ['$employerDetails.companyName', 0] },
-//                                 companyLogo: { $arrayElemAt: ['$employerDetails.companyLogo', 0] }
-//                             },
-//                             null
-//                         ]
-//                     },
-//                     applicantCount: { $size: { $ifNull: ['$applicants', []] } }
-//                 }
-//             },
-//             { $project: { employerDetails: 0, applicants: 0, deleted: 0 } }
-//         ]).toArray()
