@@ -42,6 +42,8 @@ jobController.addJobs = ("/add-job", async (req, res)=>{
 
 jobController.searchJobs = ("/search-jobs", async(req, res)=>{
     try{
+        let userID = req.decodedToken ? ObjectId.createFromHexString(req.decodedToken.userID) : null
+
         //get the job title from query param
         const payload = req.query
         payload.deleted = false
@@ -97,7 +99,38 @@ jobController.searchJobs = ("/search-jobs", async(req, res)=>{
                     applicantCount: { $size: { $ifNull: ['$applicants', []] } }
                 }
             },
-            { $project: { employerDetails: 0, applicants: 0, deleted: 0 } },
+            {
+                $lookup: { // NEW: Join with savedJobs
+                    from: database.collections.savedJobs,
+                    let: { jobId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$jobID', '$$jobId'] },
+                                        { $eq: ['$deleted', false] },
+                                        ...(userID ? [{ $eq: ['$userID', userID] }] : [{ $eq: [false, true] }]) // always false if no user
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'savedInfo'
+                }
+            },
+            {
+                $addFields: { // NEW: Add isSaved field
+                    isSaved: {
+                        $cond: [
+                            { $gt: [{ $size: '$savedInfo' }, 0] },
+                            true,
+                            false
+                        ]
+                    }
+                }
+            },
+            { $project: { employerDetails: 0, applicants: 0, deleted: 0, savedInfo: 0 } },
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }
@@ -179,6 +212,7 @@ jobController.getJob = ("/get-job", async (req, res)=>{
 
 jobController.getJobCandidate = ("/get-job-candidate", async (req, res)=>{
     try{
+        let userID = req.decodedToken ? ObjectId.createFromHexString(req.decodedToken.userID) : null
         const jobID = ObjectId.createFromHexString(req.query.jobID)
         //check if the job exists
         let job = await database.db.collection(database.collections.jobs).aggregate([
@@ -209,7 +243,38 @@ jobController.getJobCandidate = ("/get-job-candidate", async (req, res)=>{
                     applicantCount: { $size: { $ifNull: ['$applicants', []] } }
                 }
             },
-            { $project: { employerDetails: 0, applicants: 0, deleted: 0 } }
+            {
+                $lookup: { // NEW: check if user has saved this job
+                    from: database.collections.savedJobs,
+                    let: { jobId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$jobID', '$$jobId'] },
+                                        { $eq: ['$deleted', false] },
+                                        ...(userID ? [{ $eq: ['$userID', userID] }] : [{ $eq: [false, true] }]) // always false if no user
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'savedInfo'
+                }
+            },
+            {
+                $addFields: { // NEW: add isSaved field
+                    isSaved: {
+                        $cond: [
+                            { $gt: [{ $size: '$savedInfo' }, 0] },
+                            true,
+                            false
+                        ]
+                    }
+                }
+            },
+            { $project: { employerDetails: 0, applicants: 0, deleted: 0, savedInfo: 0 } }
         ]).toArray()
         
         if(job.length === 0){
@@ -439,3 +504,35 @@ jobController.deleteJob = ("/delete-job", async (req, res)=>{
   
   
 module.exports = jobController
+
+
+// let job = await database.db.collection(database.collections.jobs).aggregate([
+//             {
+//                 $match: {_id: jobID, deleted: false, active: true}
+//             },
+//             {
+//                 $lookup: {
+//                     from: database.collections.users, // users collection name
+//                     localField: 'employer',
+//                     foreignField: '_id',
+//                     as: 'employerDetails'
+//                 }
+//             },
+//             {
+//                 $addFields: {
+//                     employer: {
+//                         $cond: [
+//                             { $gt: [ { $size: '$employerDetails' }, 0 ] },
+//                             {
+//                                 _id: { $arrayElemAt: ['$employerDetails._id', 0] },
+//                                 companyName: { $arrayElemAt: ['$employerDetails.companyName', 0] },
+//                                 companyLogo: { $arrayElemAt: ['$employerDetails.companyLogo', 0] }
+//                             },
+//                             null
+//                         ]
+//                     },
+//                     applicantCount: { $size: { $ifNull: ['$applicants', []] } }
+//                 }
+//             },
+//             { $project: { employerDetails: 0, applicants: 0, deleted: 0 } }
+//         ]).toArray()
