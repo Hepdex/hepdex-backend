@@ -256,16 +256,16 @@ savedJobController.getSavedJob = ("/get-saved-job", async (req, res)=>{
 savedJobController.deleteSavedJob = ("/delete-saved-job", async (req, res)=>{
     try{
         const userID = ObjectId.createFromHexString(req.decodedToken.userID)
-        const savedJobID = ObjectId.createFromHexString(req.query.savedJobID)
+        const jobID = ObjectId.createFromHexString(req.query.jobID)
         
         //check if the saved job exists
-        const savedJob = await database.findOne({_id: savedJobID, userID: userID, deleted: false}, database.collections.savedJobs)
+        const savedJob = await database.findOne({jobID: jobID, userID: userID, deleted: false}, database.collections.savedJobs)
         if(!savedJob){
             utilities.setResponseData(res, 404, {'content-type': 'application/json'}, {msg: "saved job not found"}, true)
             return  
         }
         //mark the saved job as deleted
-        await database.updateOne({_id: savedJobID, userID: userID}, database.collections.savedJobs, {deleted: true})
+        await database.updateOne({jobID: jobID, userID: userID}, database.collections.savedJobs, {deleted: true})
 
         //send response
         utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "Deleted successfully"}, true)
