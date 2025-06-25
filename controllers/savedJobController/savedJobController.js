@@ -118,7 +118,6 @@ savedJobController.getSavedJobs = ("/get-saved-jobs", async (req, res)=>{
                     userID: 1,
                     jobID: 1,
                     createdAt: 1,
-                    isSaved: { $literal: true },
                     jobDetails: {
                         $let: {
                             vars: {
@@ -128,7 +127,8 @@ savedJobController.getSavedJobs = ("/get-saved-jobs", async (req, res)=>{
                                 $mergeObjects: [
                                     "$$jobDetails",
                                     {
-                                        applicants: { $size: { $ifNull: ["$$jobDetails.applicants", []] } }
+                                        applicants: { $size: { $ifNull: ["$$jobDetails.applicants", []] } },
+                                        isSaved: true
                                     }
                                 ]
                             }
@@ -215,7 +215,6 @@ savedJobController.getSavedJob = ("/get-saved-job", async (req, res)=>{
                     userID: 1,
                     jobID: 1,
                     createdAt: 1,
-                    isSaved: { $literal: true },
                     jobDetails: {
                         $let: {
                             vars: {
@@ -225,7 +224,8 @@ savedJobController.getSavedJob = ("/get-saved-job", async (req, res)=>{
                                 $mergeObjects: [
                                     "$$jobDetails",
                                     {
-                                        applicants: { $size: { $ifNull: ["$$jobDetails.applicants", []] } }
+                                        applicants: { $size: { $ifNull: ["$$jobDetails.applicants", []] } },
+                                        isSaved: true
                                     }
                                 ]
                             }
