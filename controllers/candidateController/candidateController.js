@@ -4,33 +4,79 @@ const {ObjectId} = require("mongodb")
 
 const candidateController = {}
 
-candidateController.getCandidates = ("/get-candidates", async (req, res)=>{
-    try{
-        const query = req.query
+candidateController.getCandidates = ("/get-candidates", async (req, res) => {
+    try {
+        const query = req.query;
 
-        //make sure the values of the query are in lower case
-        const queryKeys = Object.keys(query)
-        const queryValues = Object.values(query)
-        //const queryKeysLower = queryKeys.map((key)=>key.toLowerCase())
-        const queryValuesLower = queryValues.map((value)=>value.toLowerCase())
-        const queryLower = Object.fromEntries(queryKeys.map((key, index) => [key, queryValuesLower[index]]))
-        queryLower.role = "candidate"
-        queryLower.deleted = false
-        queryLower.available = true
-        
-        //get candidates 
-        const candidates = await database.findMany(queryLower, database.collections.users, ["password", "deleted", "otp"], 0).toArray()
-        
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {candidates}, true)
-        return
-        
-    } 
-    catch (err) {
-        console.log(err)    
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
-        return
+        // Extract known filters
+        const {
+            jobType,
+            jobTitle,
+            country,
+            skills, // comma-separated string: "HR,Recruitment"
+            matchType = "some" // 💡 NEW: allow user to specify how to match skills
+        } = query;
+
+        // Build base match object
+        const matchQuery = {
+            role: "candidate",
+            deleted: false,
+            available: true
+        };
+
+        if (jobType) matchQuery.jobType = jobType.toLowerCase();
+        if (jobTitle) matchQuery.jobTitle = jobTitle.toLowerCase();
+        if (country) matchQuery.country = country.toLowerCase();
+
+        // Prepare skill filters if present
+        const skillArray = skills ? skills.split(",").map(s => s.trim().toLowerCase()) : [];
+
+        // 💡 Determine skill match logic
+        const skillMatchExpr =
+            matchType === "some"
+                ? { $gt: [ { $size: { $setIntersection: ["$lowerSkills", skillArray] } }, 0 ] }
+                : { $eq: [ { $size: { $setIntersection: ["$lowerSkills", skillArray] } }, skillArray.length ] };
+
+        const pipeline = [
+            {
+                $match: matchQuery
+            },
+            {
+                $addFields: {
+                    lowerSkills: {
+                        $map: {
+                            input: { $ifNull: ["$bio.skills", []] },
+                            as: "skill",
+                            in: { $toLower: "$$skill" }
+                        }
+                    }
+                }
+            },
+            {
+                $match: skillArray.length > 0 ? { $expr: skillMatchExpr } : {}
+            },
+            {
+                $project: {
+                    password: 0,
+                    deleted: 0,
+                    otp: 0,
+                    lowerSkills: 0
+                }
+            }
+        ];
+
+        const candidates = await database.db.collection(database.collections.users).aggregate(pipeline).toArray();
+
+        utilities.setResponseData(res, 200, { 'content-type': 'application/json' }, { candidates }, true);
+        return;
+
+    } catch (err) {
+        console.log(err);
+        utilities.setResponseData(res, 500, { 'content-type': 'application/json' }, { msg: "server error" }, true);
+        return;
     }
-})
+});
+
 
 candidateController.getCandidate = ("/get-candidate", async (req, res)=>{
     try{
