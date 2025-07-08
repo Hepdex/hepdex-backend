@@ -1,6 +1,9 @@
 const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
 const {ObjectId} = require("mongodb")
+const {customAlphabet} = require("nanoid")
+
+const nanoid = customAlphabet('abcdefghij0123456789', 6);
   
 const jobController = {}
     
@@ -25,6 +28,19 @@ jobController.addJobs = ("/add-job", async (req, res)=>{
         payload.applicants = []
         payload.deleted = false
 
+        //Generate a unique slug
+        let slug;
+        let exists;
+        const safeTitle = payload.jobTitle.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+        do {
+            const randomPart = nanoid();
+            slug = `${safeTitle}-${randomPart}`;
+            exists = await database.db.collection(database.collections.jobs).findOne({ slug });
+        } while (exists);
+
+        payload.slug = slug;
+
         //add to database
         await database.insertOne(payload, database.collections.jobs)
         
@@ -34,7 +50,12 @@ jobController.addJobs = ("/add-job", async (req, res)=>{
       
     } 
     catch (err) {
-        console.log(err)    
+        console.log(err)
+        // handle potential race condition on slug uniqueness
+        if (err.code === 11000 && err.keyPattern && err.keyPattern.slug) {
+            utilities.setResponseData(res, 409, { 'content-type': 'application/json' }, { msg: "Slug already exists, please try again" }, true);
+            return;
+        }   
         utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
         return
     }
@@ -322,6 +343,71 @@ jobController.getJobCandidate = ("/get-job-candidate", async (req, res)=>{
         return
     }
 })
+
+jobController.getJobBySlug = ("/get-job/:slug", async (req, res) => {
+    try {
+        const slug = req.params.slug;
+
+        // Validate
+        if (!slug) {
+            utilities.setResponseData(res, 400, { 'content-type': 'application/json' }, { msg: "Missing job slug" }, true);
+            return;
+        }
+
+        // Find job by slug
+        const job = await database.db.collection(database.collections.jobs).aggregate([
+            {
+                $match: {
+                    slug,
+                    deleted: false,
+                    active: true
+                }
+            },
+            {
+                $lookup: {
+                    from: database.collections.users,
+                    localField: 'employer',
+                    foreignField: '_id',
+                    as: 'employerDetails'
+                }
+            },
+            {
+                $addFields: {
+                    employer: {
+                        $cond: [
+                            { $gt: [{ $size: "$employerDetails" }, 0] },
+                            {
+                                _id: { $arrayElemAt: ["$employerDetails._id", 0] },
+                                companyName: { $arrayElemAt: ["$employerDetails.companyName", 0] },
+                                companyLogo: { $arrayElemAt: ["$employerDetails.companyLogo", 0] }
+                            },
+                            null
+                        ]
+                    },
+                    applicantCount: { $size: { $ifNull: ["$applicants", []] } }
+                }
+            },
+            {
+                $project: {
+                    employerDetails: 0,
+                    applicants: 0,
+                    deleted: 0
+                }
+            }
+        ]).toArray();
+
+        if (job.length === 0) {
+            utilities.setResponseData(res, 404, { 'content-type': 'application/json' }, { msg: "Job not found" }, true);
+            return;
+        }
+
+        utilities.setResponseData(res, 200, { 'content-type': 'application/json' }, { job: job[0] }, true);
+    } catch (err) {
+        console.log(err);
+        utilities.setResponseData(res, 500, { 'content-type': 'application/json' }, { msg: "Server error" }, true);
+    }
+});
+
 
 jobController.updateActiveStatus = ("/update-job-active-status", async (req, res)=>{
     try{
