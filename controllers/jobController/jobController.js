@@ -494,6 +494,7 @@ jobController.apply = ("/job-application", async (req, res)=>{
         }
         //add the reumePath to the payload
         payload.resumePath = user.resumePath
+        payload.approved = false
         //check if the user has already applied for the job
         const alreadyApplied = job.applicants.find(applicant => applicant.userID.toString() === userID.toString())
         if(alreadyApplied){

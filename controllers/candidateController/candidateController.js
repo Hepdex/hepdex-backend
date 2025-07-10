@@ -185,4 +185,91 @@ candidateController.updateBio = ("/update-candidate-Bio", async (req, res)=>{
     }
 })
 
+
+candidateController.updateApprovalStatus = ("/update-applicant-approval-status", async (req, res)=>{
+    try{
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+        const payload = JSON.parse(req.body)
+        const candidateID = ObjectId.createFromHexString(payload.candidateID)
+        const jobID = ObjectId.createFromHexString(payload.jobID)
+
+        //get job
+        const job = await database.findOne({_id: jobID, deleted: false}, database.collections.jobs)
+        if(!job){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job not found"}, true)
+            return
+        }
+        //check if user owns the job
+        if(job.employer.toString() !== userID.toString()){
+            utilities.setResponseData(res, 403, {'content-type': 'application/json'}, {msg: "you are not allowed to perform this action"}, true)
+            return
+        }
+        //check if candidate esists in the job applicants
+        const candidate = job.applicants.find(applicant => applicant.userID.toString() === candidateID.toString())
+        if(!candidate){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "candidate not found in job applicants"}, true)
+            return
+        }
+
+        // make sure payload has the approved field
+        if(typeof payload.approved !== "boolean"){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "approved field is required"}, true)
+            return
+        }
+        //update candidate approval
+        await database.db.collection(database.collections.jobs).updateOne(
+            { _id: jobID, "applicants.userID": candidateID },
+            {
+                $set: {
+                    "applicants.$[elem].approved": payload.approved
+                }
+            },
+            {
+                arrayFilters: [{ "elem.userID": candidateID }]
+            }
+        );
+        
+        //send response
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "Success"}, true)
+        return
+        
+    } 
+    catch (err) {
+        console.log(err)    
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
+        return
+    }
+})
+
+
+candidateController.getApprovedApplicants = ("/get-approved-applicants", async (req, res) => {
+    try {
+        const userID = ObjectId.createFromHexString(req.decodedToken.userID)
+        const jobID = ObjectId.createFromHexString(req.query.jobID)
+        
+        //get job
+        const job = await database.findOne({_id: jobID, deleted: false}, database.collections.jobs)
+        if(!job){
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "job not found"}, true)
+            return
+        }
+        //check if user owns the job
+        if(job.employer.toString() !== userID.toString()){
+            utilities.setResponseData(res, 403, {'content-type': 'application/json'}, {msg: "you are not allowed to perform this action"}, true)
+            return
+        }
+
+        //get approved applicants
+        const candidates = job.applicants.filter(applicant => applicant.approved === true) 
+
+        utilities.setResponseData(res, 200, { 'content-type': 'application/json' }, { candidates }, true);
+        return;
+
+    } catch (err) {
+        console.log(err);
+        utilities.setResponseData(res, 500, { 'content-type': 'application/json' }, { msg: "server error" }, true);
+        return;
+    }
+});
+
 module.exports = candidateController
