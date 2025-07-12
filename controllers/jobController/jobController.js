@@ -346,6 +346,7 @@ jobController.getJobCandidate = ("/get-job-candidate", async (req, res)=>{
 
 jobController.getJobBySlug = ("/get-job/:slug", async (req, res) => {
     try {
+        let userID = req.decodedToken ? ObjectId.createFromHexString(req.decodedToken.userID) : null
         const slug = req.params.slug;
 
         // Validate
@@ -388,10 +389,57 @@ jobController.getJobBySlug = ("/get-job/:slug", async (req, res) => {
                 }
             },
             {
+                $lookup: { // NEW: check if user has saved this job
+                    from: database.collections.savedJobs,
+                    let: { jobId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$jobID', '$$jobId'] },
+                                        { $eq: ['$deleted', false] },
+                                        ...(userID ? [{ $eq: ['$userID', userID] }] : [{ $eq: [false, true] }]) // always false if no user
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'savedInfo'
+                }
+            },
+            {
+                $lookup: { // NEW: Lookup for hasApplied
+                    from: database.collections.jobApplications,
+                    let: { jobId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$jobID', '$$jobId'] },
+                                        ...(userID ? [{ $eq: ['$userID', userID] }] : [{ $eq: [false, true] }])
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'appliedInfo'
+                }
+            },
+            {
+                $addFields: { // NEW: add isSaved field
+                    isSaved: { $gt: [{ $size: '$savedInfo' }, 0] },
+                    hasApplied: { $gt: [{ $size: '$appliedInfo' }, 0] }
+                }
+            },
+            {
                 $project: {
                     employerDetails: 0,
                     applicants: 0,
-                    deleted: 0
+                    deleted: 0,
+                    savedInfo: 0,
+                    appliedInfo: 0
                 }
             }
         ]).toArray();
