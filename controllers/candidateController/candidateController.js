@@ -211,7 +211,7 @@ candidateController.updateHiredStatus = ("/update-applicant-hired-status", async
         }
 
         // make sure payload has the hired field
-        if(typeof payload.hiredStatus !== "string" || !['b', 'a', 'h'].includes(payload.hiredStatus)){
+        if(typeof payload.hiredStatus !== "string" || !['b', 'a', 'h', 'r'].includes(payload.hiredStatus)){
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "hired field is required"}, true)
             return
         }
