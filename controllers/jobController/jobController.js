@@ -666,6 +666,89 @@ jobController.deleteJob = ("/delete-job", async (req, res)=>{
         return
     }
 })
+
+
+
+
+jobController.getJobSharePage = async (req, res) => {
+  const { slug } = req.params;
+
+    try{
+
+        let job = await database.db.collection(database.collections.jobs).aggregate([
+
+            { $match: { slug, deleted: false, active: true } },  // .findOne({ slug, deleted: false, active: true });
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'employer',
+                    foreignField: '_id',
+                    as: 'employerDetails'
+                }
+            },
+            { $unwind: '$employerDetails' }
+        ]).toArray();
+                                         
+
+        if (!job.length) {
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "Job not found"}, true)
+            return;
+        }
+
+        job = job[0];
+        const escape = (str = "") =>
+            str.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+        ;
+
+        const jobTitle = escape(job.jobTitle) || "Untitled Job";
+        const jobDesc = escape(job.aboutRole?.slice(0, 200) ) || "View this opportunity on Hepdex.";
+        const ogImage = escape(job.employerDetails.companyLogo)  || "https://api.hepdex.com/images/logo2.jpg"; // Optional fallback image
+        const companyName = job.employerDetails.companyName ? job.employerDetails.companyName.replace(/\s+/g, "-") : "Hepdex";
+        const jobUrl = `https://hepdex.com/jobs/${companyName}/${slug}`;
+
+        const html = `
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <meta charset="utf-8" />
+                    <title>${jobTitle} | Hepdex</title>
+                    <meta property="og:title" content="${jobTitle}" />
+                    <meta property="og:description" content="${jobDesc}" />
+                    <meta property="og:image" content="${ogImage}" />
+                    <meta property="og:url" content="${jobUrl}" />
+                    <meta property="og:type" content="website" />
+                    <meta property="og:site_name" content="Hepdex" />
+
+                    <meta name="twitter:card" content="summary_large_image" />
+                    <meta name="twitter:title" content="${jobTitle}" />
+                    <meta name="twitter:description" content="${jobDesc}" />
+                    <meta name="twitter:image" content="${ogImage}" />
+
+                    <!-- Redirect Logic -->
+                    <script>
+                        window.location.href = "${jobUrl}";
+                    </script>
+                    <noscript>
+                        <meta http-equiv="refresh" content="0; url=${jobUrl}" />
+                    </noscript>
+                </head>
+                <body>
+                </body>
+            </html>
+        `;
+
+        res.set("Content-Type", "text/html");
+        res.send(html);
+    } 
+    catch (error) {
+        console.error("Error generating share page:", error);
+        res.status(500).send("Server error");
+    }
+};
   
   
 module.exports = jobController
