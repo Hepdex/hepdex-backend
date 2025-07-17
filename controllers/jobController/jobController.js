@@ -706,7 +706,7 @@ jobController.getJobSharePage = async (req, res) => {
 
         const jobTitle = escape(job.jobTitle) || "Untitled Job";
         const jobDesc = escape(job.aboutRole?.slice(0, 200) ) || "View this opportunity on Hepdex.";
-        const ogImage = escape(job.employerDetails.companyLogo)  || "https://api.hepdex.com/images/logo2.jpg"; // Optional fallback image
+        const ogImage = "https://api.hepdex.com/images/share-job-img.jpg";    //escape(job.employerDetails.companyLogo)  || "https://api.hepdex.com/images/logo2.jpg"; 
         const companyName = job.employerDetails.companyName ? job.employerDetails.companyName.replace(/\s+/g, "-") : "Hepdex";
         const jobUrl = `https://hepdex.com/jobs/${companyName}/${slug}`;
 
