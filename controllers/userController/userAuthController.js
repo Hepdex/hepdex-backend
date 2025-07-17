@@ -21,8 +21,20 @@ userAuthController.login = ("/user/login", async (req, res)=>{
         if(!user.isEmailVerified){
             //generate new OTP
             const otp = utilities.otpGenerator()
-            //update user object
-            await database.updateOne({_id: user._id}, database.collections.users, {otp})
+
+            //delete any existing update request
+            await database.deleteMany({userID: user._id}, database.collections.updates)
+
+            //add data to updates collection
+            const updateData = {
+                userID: user._id,
+                type: "isEmailVerified",
+                value: true,
+                otp: otp,
+                createdAt: new Date()
+            }
+
+            await database.insertOne(updateData, database.collections.updates)
             //send response
             utilities.setResponseData(res, 401, {'content-type': 'application/json'}, {msg: "Unverified email", userId: user._id}, true)
             //SEND OTP TO EMAIL
