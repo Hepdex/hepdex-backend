@@ -710,55 +710,29 @@ jobController.getJobSharePage = async (req, res) => {
         const companyName = job.employerDetails.companyName ? job.employerDetails.companyName.replace(/\s+/g, "-") : "Hepdex";
         const jobUrl = `https://hepdex.com/jobs/${companyName}/${slug}`;
 
-        const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <meta charset="utf-8" />
-            <title>${jobTitle} | Hepdex</title>
-            <meta property="og:title" content="${jobTitle}" />
-            <meta property="og:description" content="${jobDesc}" />
-            <meta property="og:image" content="${ogImage}" />
-            <meta property="og:url" content="${jobUrl}" />
-            <meta property="og:type" content="website" />
-            <meta property="og:site_name" content="Hepdex" />
+        const html =  `
+            <!DOCTYPE html>
+             <html lang="en">
+                 <head>
+                     <meta charset="utf-8" />
+                     <title>${jobTitle} | Hepdex</title>
+                     <meta property="og:title" content="${jobTitle}" />
+                     <meta property="og:description" content="${jobDesc}" />
+                     <meta property="og:image" content="${ogImage}" />
+                     <meta property="og:url" content="${jobUrl}" />
+                     <meta property="og:type" content="website" />
+                     <meta property="og:site_name" content="Hepdex" />
 
-            <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content="${jobTitle}" />
-            <meta name="twitter:description" content="${jobDesc}" />
-            <meta name="twitter:image" content="${ogImage}" />
+                     <meta name="twitter:card" content="summary_large_image" />
+                     <meta name="twitter:title" content="${jobTitle}" />
+                     <meta name="twitter:description" content="${jobDesc}" />
+                     <meta name="twitter:image" content="${ogImage}" />
 
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    padding: 2rem;
-                    text-align: center;
-                }
-                .redirect-message {
-                    font-size: 1.2rem;
-                    color: #333;
-                }
-                .redirect-link {
-                    color: #0066cc;
-                    text-decoration: none;
-                    font-weight: bold;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="redirect-message">
-                <p>You are being redirected to the full job listing...</p>
-                <p><a class="redirect-link" href="${jobUrl}">Click here if you're not redirected</a></p>
-            </div>
-
-            <script>
-                setTimeout(() => {
-                    window.location.href = "${jobUrl}";
-                }, 2000);
-            </script>
-        </body>
-    </html>
-`;
+                 </head>
+                 <body>
+                 </body>
+             </html>
+         `;
 
         res.set("Content-Type", "text/html");
         res.send(html);
