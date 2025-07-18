@@ -730,10 +730,10 @@ jobController.getJobSharePage = async (req, res) => {
 
                      <!-- Redirect Logic -->
                      <script>
-                         window.location.href = "${jobUrl}";
+                         window.location.href = "https://hepdex.com/jobs/${companyName}/${slug}";
                      </script>
                      <noscript>
-                         <meta http-equiv="refresh" content="0; url=${jobUrl}" />
+                         <meta http-equiv="refresh" content="0; url=https://hepdex.com/jobs/${companyName}/${slug}" />
                      </noscript>
                  </head>
                  <body>
