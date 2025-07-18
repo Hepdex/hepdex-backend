@@ -704,15 +704,15 @@ jobController.getJobSharePage = async (req, res) => {
             .replace(/'/g, "&#039;")
         ;
 
-        const jobTitle = escape(job.jobTitle) || "Untitled Job";
+        const jobTitle = escape(`${job.jobTitle} at ${job.employerDetails.companyName}`) || "Untitled Job";
         const jobDesc = escape(job.aboutRole?.slice(0, 200) ) || "View this opportunity on Hepdex.";
         const ogImage = "https://api.hepdex.com/images/share-job-img.jpg";    //escape(job.employerDetails.companyLogo)  || "https://api.hepdex.com/images/logo2.jpg"; 
         const companyName = job.employerDetails.companyName ? job.employerDetails.companyName.replace(/\s+/g, "-") : "Hepdex";
         const jobUrl =   `https://api.hepdex.com/share-job/${slug}`;//`https://hepdex.com/jobs/${companyName}/${slug}`;
 
-        const html =  `
+        const html =   `
             <!DOCTYPE html>
-             <html lang="en">
+            <html lang="en">
                  <head>
                      <meta charset="utf-8" />
                      <title>${jobTitle} | Hepdex</title>
@@ -728,6 +728,13 @@ jobController.getJobSharePage = async (req, res) => {
                      <meta name="twitter:description" content="${jobDesc}" />
                      <meta name="twitter:image" content="${ogImage}" />
 
+                     <!-- Redirect Logic -->
+                     <script>
+                         window.location.href = "${jobUrl}";
+                     </script>
+                     <noscript>
+                         <meta http-equiv="refresh" content="0; url=${jobUrl}" />
+                     </noscript>
                  </head>
                  <body>
                  </body>
@@ -745,37 +752,3 @@ jobController.getJobSharePage = async (req, res) => {
   
   
 module.exports = jobController
-
-
-
-
-// `
-//             <!DOCTYPE html>
-//             <html lang="en">
-//                 <head>
-//                     <meta charset="utf-8" />
-//                     <title>${jobTitle} | Hepdex</title>
-//                     <meta property="og:title" content="${jobTitle}" />
-//                     <meta property="og:description" content="${jobDesc}" />
-//                     <meta property="og:image" content="${ogImage}" />
-//                     <meta property="og:url" content="${jobUrl}" />
-//                     <meta property="og:type" content="website" />
-//                     <meta property="og:site_name" content="Hepdex" />
-
-//                     <meta name="twitter:card" content="summary_large_image" />
-//                     <meta name="twitter:title" content="${jobTitle}" />
-//                     <meta name="twitter:description" content="${jobDesc}" />
-//                     <meta name="twitter:image" content="${ogImage}" />
-
-//                     <!-- Redirect Logic -->
-//                     <script>
-//                         window.location.href = "${jobUrl}";
-//                     </script>
-//                     <noscript>
-//                         <meta http-equiv="refresh" content="0; url=${jobUrl}" />
-//                     </noscript>
-//                 </head>
-//                 <body>
-//                 </body>
-//             </html>
-//         `
