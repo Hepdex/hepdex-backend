@@ -714,32 +714,37 @@ jobController.getJobSharePage = async (req, res) => {
             <!DOCTYPE html>
             <html lang="en">
                  <head>
-                     <meta charset="utf-8" />
-                     <title>${jobTitle} | Hepdex</title>
-                     <meta property="og:title" content="${jobTitle}" />
-                     <meta property="og:description" content="${jobDesc}" />
-                     <meta property="og:image" content="${ogImage}" />
-                     <meta property="og:url" content="${jobUrl}" />
-                     <meta property="og:type" content="website" />
-                     <meta property="og:site_name" content="Hepdex" />
+                    <meta charset="utf-8" />
+                    <title>${jobTitle} | Hepdex</title>
+                    <meta property="og:title" content="${jobTitle}" />
+                    <meta property="og:description" content="${jobDesc}" />
+                    <meta property="og:image" content="${ogImage}" />
+                    <meta property="og:image:alt" content={description} />
+                    <meta property="og:image:width" content="1200" />
+                    <meta property="og:image:height" content="630" />
+                    <meta property="og:url" content="${jobUrl}" />
+                    <meta property="og:type" content="website" />
+                    <meta property="og:site_name" content="Hepdex" />
 
-                     <meta name="twitter:card" content="summary_large_image" />
-                     <meta name="twitter:title" content="${jobTitle}" />
-                     <meta name="twitter:description" content="${jobDesc}" />
-                     <meta name="twitter:image" content="${ogImage}" />
+                    <meta name="twitter:card" content="summary_large_image" />
+                    <meta name="twitter:title" content="${jobTitle}" />
+                    <meta name="twitter:description" content="${jobDesc}" />
+                    <meta name="twitter:image" content="${ogImage}" />
+                    <meta name="twitter:image:width" content="1200" />
+                    <meta name="twitter:image:height" content="630" />
 
-                     <!-- Redirect Logic -->
-                     <script>
-                         window.location.href = "https://hepdex.com/jobs/${companyName}/${slug}";
-                     </script>
-                     <noscript>
-                         <meta http-equiv="refresh" content="0; url=https://hepdex.com/jobs/${companyName}/${slug}" />
-                     </noscript>
-                 </head>
-                 <body>
-                 </body>
-             </html>
-         `;
+                    <!-- Redirect Logic -->
+                    <script>
+                        window.location.href = "https://hepdex.com/jobs/${companyName}/${slug}";
+                    </script>
+                    <noscript>
+                        <meta http-equiv="refresh" content="0; url=https://hepdex.com/jobs/${companyName}/${slug}" />
+                    </noscript>
+                </head>
+                <body>
+                </body>
+            </html>
+        `;
 
         res.set("Content-Type", "text/html");
         res.send(html);
