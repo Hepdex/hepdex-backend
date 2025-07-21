@@ -16,6 +16,12 @@ employerAuthController.signup = ("/employer-signup", async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
             return
         }
+        //trim payload
+        for(let key of Object.keys(payload)){
+            if(typeof payload[key] === "string"){
+                payload[key] = payload[key].trim()
+            }
+        }
 
         //convert email and username to all lowercase
         payload.email = payload.email.toLowerCase()

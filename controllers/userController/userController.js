@@ -56,6 +56,12 @@ userController.updateEmail = ("/update-email", async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: payloadStatus.msg}, true)
             return
         }
+        //trim payload
+        for(let key of Object.keys(payload)){
+            if(typeof payload[key] === "string"){
+                payload[key] = payload[key].trim()
+            }
+        }
 
         //check if email already exists
         const emailExists = await database.findOne({email: payload.email}, database.collections.users)
@@ -131,7 +137,12 @@ userController.updatePassword = ("/update-password", async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: payloadStatus.msg}, true)
             return
         }
-
+        //trim payload
+        for(let key of Object.keys(payload)){
+            if(typeof payload[key] === "string"){
+                payload[key] = payload[key].trim()
+            }
+        }
 
         //check if old password is correct
         const password = utilities. dataHasher(payload.oldPassword)

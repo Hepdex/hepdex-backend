@@ -18,6 +18,13 @@ candidateAuthController.signup = ("/candidate-signup", async (req, res)=>{
             utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
             return
         }
+        //trim payload
+        for(let key of Object.keys(payload)){
+            if(typeof payload[key] === "string"){
+                payload[key] = payload[key].trim()
+            }
+        }
+
         payload._id = req.generatedUserID
 
         

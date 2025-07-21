@@ -126,6 +126,13 @@ candidateController.updateProfile = ("/update-candidate-profile", async (req, re
             return
         }
 
+        //trim payload
+        for(let key of Object.keys(payload)){
+            if(typeof payload[key] === "string"){
+                payload[key] = payload[key].trim()
+            }
+        }
+
         if(payloadStatus.updates.country){
             payloadStatus.updates.country = payloadStatus.updates.country.toLowerCase()
         }
